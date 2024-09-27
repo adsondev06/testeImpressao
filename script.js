@@ -52,6 +52,7 @@
 
 //         // Chama a função para imprimir o driver encontrado
 //         imprimirEtiqueta(resultado.driver);
+//         printLabel(resultado.driver); // Adiciona impressão direta
 //     } else {
 //         resultadosDiv.innerHTML = "Nenhum resultado encontrado.";
 //     }
@@ -129,6 +130,30 @@
 //     doc.close();
 // }
 
+// // Função para impressão direta via USB ou rede
+// function printLabel(driver) {
+//     const printer = require('printer'); // Certifique-se de que a biblioteca 'printer' está instalada
+
+//     // Comando ZPL para a etiqueta (ajuste conforme necessário)
+//     const zplCommand = `
+//         ^XA
+//         ^FO50,50^ADN,36,20^FDDriver: ${driver}^FS
+//         ^XZ
+//     `;
+
+//     printer.printDirect({
+//         data: zplCommand,
+//         printer: 'Nome da sua impressora', // Substitua pelo nome da sua impressora
+//         type: 'RAW',
+//         success: function(jobID) {
+//             console.log(`Sent to printer with ID: ${jobID}`);
+//         },
+//         error: function(err) {
+//             console.error(`Printing failed: ${err}`);
+//         }
+//     });
+// }
+
 // // Função para gerar PDF do histórico
 // function gerarPDF() {
 //     const { jsPDF } = window.jspdf; // Referência à biblioteca jsPDF
@@ -154,7 +179,6 @@
 //     event.returnValue = message; // Para a maioria dos navegadores
 //     return message; // Para Firefox
 // });
-
 
 
 let dadosPlanilha = []; // Array para armazenar os dados da planilha
@@ -211,7 +235,9 @@ function buscarPorCodigo() {
 
         // Chama a função para imprimir o driver encontrado
         imprimirEtiqueta(resultado.driver);
-        printLabel(resultado.driver); // Adiciona impressão direta
+
+        // Chama a função para enviar o driver ao servidor Node.js para impressão
+        enviarParaImpressao(resultado.driver);
     } else {
         resultadosDiv.innerHTML = "Nenhum resultado encontrado.";
     }
@@ -219,6 +245,26 @@ function buscarPorCodigo() {
     // Limpa o campo de busca e mantém o foco
     document.getElementById("codigo").value = "";
     document.getElementById("codigo").focus();
+}
+
+// Função para enviar os dados de impressão ao servidor
+function enviarParaImpressao(driver) {
+    fetch('http://localhost:3000/imprimir', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ driver: driver })
+    })
+    .then(response => response.text())
+    .then(result => {
+        console.log(result); // Resultado do servidor
+        alert('Impressão enviada com sucesso!');
+    })
+    .catch(error => {
+        console.error('Erro ao enviar para impressão:', error);
+        alert('Erro ao enviar para impressão.');
+    });
 }
 
 // Função para atualizar o histórico de buscas na tela
@@ -287,30 +333,6 @@ function imprimirEtiqueta(driver) {
         </html>
     `);
     doc.close();
-}
-
-// Função para impressão direta via USB ou rede
-function printLabel(driver) {
-    const printer = require('printer'); // Certifique-se de que a biblioteca 'printer' está instalada
-
-    // Comando ZPL para a etiqueta (ajuste conforme necessário)
-    const zplCommand = `
-        ^XA
-        ^FO50,50^ADN,36,20^FDDriver: ${driver}^FS
-        ^XZ
-    `;
-
-    printer.printDirect({
-        data: zplCommand,
-        printer: 'Nome da sua impressora', // Substitua pelo nome da sua impressora
-        type: 'RAW',
-        success: function(jobID) {
-            console.log(`Sent to printer with ID: ${jobID}`);
-        },
-        error: function(err) {
-            console.error(`Printing failed: ${err}`);
-        }
-    });
 }
 
 // Função para gerar PDF do histórico
