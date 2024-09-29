@@ -285,6 +285,3 @@ window.addEventListener('beforeunload', function (event) {
     event.returnValue = message; // Para a maioria dos navegadores
     return message; // Para Firefox
 });
-
-
-9131203612
