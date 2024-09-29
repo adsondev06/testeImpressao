@@ -6,7 +6,7 @@
     <title>Buscar Driver por Código</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script> <!-- CDN do jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -14,7 +14,7 @@
         <input type="file" id="input-excel" accept=".xlsx, .xls" />
         <input type="text" id="codigo" placeholder="Digite o código para buscar" />
         <button onclick="buscarPorCodigo()">Buscar</button> <br>
-        <button onclick="gerarPDF()">Exportar PDF do Histórico</button> <!-- Botão para gerar o PDF -->
+        <button onclick="gerarXLSX()" class="extrair">Exportar XLSX do Histórico</button> <!-- Botão para gerar o PDF -->
 
         <div id="resultado"></div>
 

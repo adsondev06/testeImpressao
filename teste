@@ -1,0 +1,26 @@
+// Função para filtrar o histórico de buscas e ordenar numericamente
+function filtrarHistorico() {
+    const filtro = document.getElementById("filtro").value.toLowerCase();
+    const listaHistorico = document.getElementById("lista-historico");
+    listaHistorico.innerHTML = ""; // Limpa a lista atual
+
+    // Filtra os registros que correspondem ao filtro
+    const historicoFiltrado = historicoBuscas.filter(item => {
+        return item.codigo.toString().toLowerCase().includes(filtro) ||
+               item.driver.toLowerCase().includes(filtro);
+    });
+
+    // Ordena numericamente com base no número após "Rizzy"
+    historicoFiltrado.sort((a, b) => {
+        const numeroA = parseInt(a.driver.match(/\d+/)[0], 10); // Extrai o número de "Rizzy X"
+        const numeroB = parseInt(b.driver.match(/\d+/)[0], 10);
+        return numeroA - numeroB; // Compara os números para ordenar
+    });
+
+    // Exibe os registros filtrados e ordenados
+    historicoFiltrado.forEach(item => {
+        const li = document.createElement("li");
+        li.innerHTML = `Código: <strong>${item.codigo}</strong> - Driver: <span class="highlight">${item.driver}</span>`;
+        listaHistorico.appendChild(li);
+    });
+}

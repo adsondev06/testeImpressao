@@ -43,16 +43,13 @@
 //     if (resultado) {
 //         resultadosDiv.innerHTML = `Código: <strong>${resultado.codigo}</strong> - Driver: <span class="highlight">${resultado.driver}</span>`;
 
-//         // Adiciona ao histórico de buscas
-//         historicoBuscas.push({
+//         // Adiciona ao histórico de buscas no início
+//         historicoBuscas.unshift({
 //             codigo: resultado.codigo,
 //             driver: resultado.driver
 //         });
 //         atualizarHistorico();
 
-//         // Chama a função para imprimir o driver encontrado
-//         imprimirEtiqueta(resultado.driver);
-//         printLabel(resultado.driver); // Adiciona impressão direta
 //     } else {
 //         resultadosDiv.innerHTML = "Nenhum resultado encontrado.";
 //     }
@@ -74,104 +71,69 @@
 //     });
 // }
 
-// // Função para filtrar o histórico de buscas
+// // Função para filtrar o histórico de buscas e ordenar numericamente
 // function filtrarHistorico() {
 //     const filtro = document.getElementById("filtro").value.toLowerCase();
 //     const listaHistorico = document.getElementById("lista-historico");
 //     listaHistorico.innerHTML = ""; // Limpa a lista atual
 
-//     // Exibe os registros filtrados
-//     historicoBuscas.forEach(item => {
-//         if (item.codigo.toString().toLowerCase().includes(filtro) || 
-//             item.driver.toLowerCase().includes(filtro)) {
-//             const li = document.createElement("li");
-//             li.innerHTML = `Código: <strong>${item.codigo}</strong> - Driver: <span class="highlight">${item.driver}</span>`;
-//             listaHistorico.appendChild(li);
-//         }
+//     // Filtra os registros que correspondem ao filtro
+//     const historicoFiltrado = historicoBuscas.filter(item => {
+//         return item.codigo.toString().toLowerCase().includes(filtro) ||
+//                item.driver.toLowerCase().includes(filtro);
+//     });
+
+//     // Ordena numericamente com base no número após "Rizzy"
+//     historicoFiltrado.sort((a, b) => {
+//         const numeroA = parseInt(a.driver.match(/\d+/)[0], 10); // Extrai o número de "Rizzy X"
+//         const numeroB = parseInt(b.driver.match(/\d+/)[0], 10);
+//         return numeroA - numeroB; // Compara os números para ordenar
+//     });
+
+//     // Exibe os registros filtrados e ordenados
+//     historicoFiltrado.forEach(item => {
+//         const li = document.createElement("li");
+//         li.innerHTML = `Código: <strong>${item.codigo}</strong> - Driver: <span class="highlight">${item.driver}</span>`;
+//         listaHistorico.appendChild(li);
 //     });
 // }
 
-// // Função para imprimir a etiqueta do driver
-// function imprimirEtiqueta(driver) {
-//     const frame = document.getElementById("frame-impressao");
-//     const doc = frame.contentWindow.document;
-//     doc.open();
-//     doc.write(`
-//         <html>
-//         <head>
-//             <title>Impressão de Etiqueta</title>
-//             <style>
-//                 body {
-//                     display: flex;
-//                     justify-content: center;
-//                     align-items: center;
-//                     height: 100vh;
-//                     margin: 0;
-//                 }
-//                 .driver-label {
-//                     font-size: 50px; /* Tamanho da fonte maior */
-//                     text-align: center;
-//                     width: 100%;
-//                 }
-//             </style>
-//         </head>
-//         <body>
-//             <div class="driver-label">Driver: ${driver}</div>
-//             <script>
-//                 window.onload = function() {
-//                     setTimeout(() => {
-//                         window.print(); // Abre o diálogo de impressão
-//                     }, 100); // Atraso para garantir que o conteúdo esteja carregado
-//                 }
-//             </script>
-//         </body>
-//         </html>
-//     `);
-//     doc.close();
+// // Função para gerar arquivo XLSX do histórico
+// function gerarXLSX() {
+//     const workbook = XLSX.utils.book_new();
+//     const filtro = document.getElementById("filtro").value.toLowerCase();
+
+//     // Se houver filtro, exporta apenas os itens filtrados
+//     const historicoParaExportar = filtro 
+//         ? historicoBuscas.filter(item => {
+//             return item.codigo.toString().toLowerCase().includes(filtro) ||
+//                    item.driver.toLowerCase().includes(filtro);
+//         }).sort((a, b) => {
+//             const numeroA = parseInt(a.driver.match(/\d+/)[0], 10);
+//             const numeroB = parseInt(b.driver.match(/\d+/)[0], 10);
+//             return numeroA - numeroB;
+//         })
+//         : historicoBuscas; // Caso contrário, exporta tudo
+
+//     // Adiciona os dados do histórico na planilha
+//     const worksheetData = [
+//         ["Código", "Driver"], // Cabeçalhos das colunas
+//         ...historicoParaExportar.map(item => [item.codigo, item.driver]) // Dados do histórico
+//     ];
+
+//     const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+//     XLSX.utils.book_append_sheet(workbook, worksheet, "Histórico de Buscas");
+    
+//     // Gera o arquivo e dispara o download
+//     XLSX.writeFile(workbook, "historico_buscas.xlsx");
 // }
 
-// // Função para impressão direta via USB ou rede
-// function printLabel(driver) {
-//     const printer = require('printer'); // Certifique-se de que a biblioteca 'printer' está instalada
-
-//     // Comando ZPL para a etiqueta (ajuste conforme necessário)
-//     const zplCommand = `
-//         ^XA
-//         ^FO50,50^ADN,36,20^FDDriver: ${driver}^FS
-//         ^XZ
-//     `;
-
-//     printer.printDirect({
-//         data: zplCommand,
-//         printer: 'Nome da sua impressora', // Substitua pelo nome da sua impressora
-//         type: 'RAW',
-//         success: function(jobID) {
-//             console.log(`Sent to printer with ID: ${jobID}`);
-//         },
-//         error: function(err) {
-//             console.error(`Printing failed: ${err}`);
-//         }
-//     });
-// }
-
-// // Função para gerar PDF do histórico
-// function gerarPDF() {
-//     const { jsPDF } = window.jspdf; // Referência à biblioteca jsPDF
-//     const doc = new jsPDF(); // Cria um novo documento PDF
-
-//     // Adiciona o título no PDF
-//     doc.text("Histórico de Drivers", 10, 10);
-
-//     // Adiciona os resultados do histórico ao PDF
-//     let y = 20; // Posição vertical inicial no PDF
-//     historicoBuscas.forEach(item => {
-//         doc.text(`Código: ${item.codigo}, Driver: ${item.driver}`, 10, y);
-//         y += 10; // Incrementa a posição vertical para cada entrada
-//     });
-
-//     // Baixa o PDF com o nome "historico_buscas.pdf"
-//     doc.save("historico_bipagem.pdf");
-// }
+// // Adiciona evento de tecla no campo de entrada de código para capturar "Enter"
+// document.getElementById("codigo").addEventListener("keydown", (event) => {
+//     if (event.key === "Enter") {
+//         buscarPorCodigo(); // Chama a função de busca quando "Enter" for pressionado
+//     }
+// });
 
 // // Alerta de confirmação ao recarregar a página
 // window.addEventListener('beforeunload', function (event) {
@@ -179,6 +141,7 @@
 //     event.returnValue = message; // Para a maioria dos navegadores
 //     return message; // Para Firefox
 // });
+
 
 
 let dadosPlanilha = []; // Array para armazenar os dados da planilha
@@ -226,18 +189,13 @@ function buscarPorCodigo() {
     if (resultado) {
         resultadosDiv.innerHTML = `Código: <strong>${resultado.codigo}</strong> - Driver: <span class="highlight">${resultado.driver}</span>`;
 
-        // Adiciona ao histórico de buscas
-        historicoBuscas.push({
+        // Adiciona ao histórico de buscas no início
+        historicoBuscas.unshift({
             codigo: resultado.codigo,
             driver: resultado.driver
         });
         atualizarHistorico();
 
-        // Chama a função para imprimir o driver encontrado
-        imprimirEtiqueta(resultado.driver);
-
-        // Chama a função para enviar o driver ao servidor Node.js para impressão
-        enviarParaImpressao(resultado.driver);
     } else {
         resultadosDiv.innerHTML = "Nenhum resultado encontrado.";
     }
@@ -245,26 +203,6 @@ function buscarPorCodigo() {
     // Limpa o campo de busca e mantém o foco
     document.getElementById("codigo").value = "";
     document.getElementById("codigo").focus();
-}
-
-// Função para enviar os dados de impressão ao servidor
-function enviarParaImpressao(driver) {
-    fetch('http://localhost:3000/imprimir', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ driver: driver })
-    })
-    .then(response => response.text())
-    .then(result => {
-        console.log(result); // Resultado do servidor
-        alert('Impressão enviada com sucesso!');
-    })
-    .catch(error => {
-        console.error('Erro ao enviar para impressão:', error);
-        alert('Erro ao enviar para impressão.');
-    });
 }
 
 // Função para atualizar o histórico de buscas na tela
@@ -279,80 +217,67 @@ function atualizarHistorico() {
     });
 }
 
-// Função para filtrar o histórico de buscas
+// Função para filtrar o histórico de buscas e ordenar numericamente
 function filtrarHistorico() {
     const filtro = document.getElementById("filtro").value.toLowerCase();
     const listaHistorico = document.getElementById("lista-historico");
     listaHistorico.innerHTML = ""; // Limpa a lista atual
 
-    // Exibe os registros filtrados
-    historicoBuscas.forEach(item => {
-        if (item.codigo.toString().toLowerCase().includes(filtro) || 
-            item.driver.toLowerCase().includes(filtro)) {
-            const li = document.createElement("li");
-            li.innerHTML = `Código: <strong>${item.codigo}</strong> - Driver: <span class="highlight">${item.driver}</span>`;
-            listaHistorico.appendChild(li);
-        }
+    // Filtra os registros que correspondem ao filtro
+    const historicoFiltrado = historicoBuscas.filter(item => {
+        return item.codigo.toString().toLowerCase().includes(filtro) ||
+               item.driver.toLowerCase().includes(filtro);
+    });
+
+    // Ordena numericamente com base no número após "Rizzy"
+    historicoFiltrado.sort((a, b) => {
+        const numeroA = parseInt(a.driver.match(/\d+/)[0], 10); // Extrai o número de "Rizzy X"
+        const numeroB = parseInt(b.driver.match(/\d+/)[0], 10);
+        return numeroA - numeroB; // Compara os números para ordenar
+    });
+
+    // Exibe os registros filtrados e ordenados
+    historicoFiltrado.forEach(item => {
+        const li = document.createElement("li");
+        li.innerHTML = `Código: <strong>${item.codigo}</strong> - Driver: <span class="highlight">${item.driver}</span>`;
+        listaHistorico.appendChild(li);
     });
 }
 
-// Função para imprimir a etiqueta do driver
-function imprimirEtiqueta(driver) {
-    const frame = document.getElementById("frame-impressao");
-    const doc = frame.contentWindow.document;
-    doc.open();
-    doc.write(`
-        <html>
-        <head>
-            <title>Impressão de Etiqueta</title>
-            <style>
-                body {
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    height: 100vh;
-                    margin: 0;
-                }
-                .driver-label {
-                    font-size: 50px; /* Tamanho da fonte maior */
-                    text-align: center;
-                    width: 100%;
-                }
-            </style>
-        </head>
-        <body>
-            <div class="driver-label">Driver: ${driver}</div>
-            <script>
-                window.onload = function() {
-                    setTimeout(() => {
-                        window.print(); // Abre o diálogo de impressão
-                    }, 100); // Atraso para garantir que o conteúdo esteja carregado
-                }
-            </script>
-        </body>
-        </html>
-    `);
-    doc.close();
+// Função para gerar arquivo XLSX do histórico
+function gerarXLSX() {
+    const workbook = XLSX.utils.book_new();
+    const filtro = document.getElementById("filtro").value.toLowerCase();
+
+    // Se houver filtro, exporta apenas os itens filtrados
+    const historicoParaExportar = filtro 
+        ? historicoBuscas.filter(item => {
+            return item.codigo.toString().toLowerCase().includes(filtro) ||
+                   item.driver.toLowerCase().includes(filtro);
+        }).sort((a, b) => {
+            const numeroA = parseInt(a.driver.match(/\d+/)[0], 10);
+            const numeroB = parseInt(b.driver.match(/\d+/)[0], 10);
+            return numeroA - numeroB;
+        })
+        : historicoBuscas; // Caso contrário, exporta tudo
+
+    // Adiciona os dados do histórico na planilha
+    const worksheetData = [
+        ["Código", "Driver"], // Cabeçalhos das colunas
+        ...historicoParaExportar.map(item => [item.codigo, item.driver]) // Dados do histórico
+    ];
+
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Histórico de Buscas");
+    
+    // Gera o arquivo e dispara o download
+    XLSX.writeFile(workbook, "historico_buscas.xlsx");
 }
 
-// Função para gerar PDF do histórico
-function gerarPDF() {
-    const { jsPDF } = window.jspdf; // Referência à biblioteca jsPDF
-    const doc = new jsPDF(); // Cria um novo documento PDF
-
-    // Adiciona o título no PDF
-    doc.text("Histórico de Drivers", 10, 10);
-
-    // Adiciona os resultados do histórico ao PDF
-    let y = 20; // Posição vertical inicial no PDF
-    historicoBuscas.forEach(item => {
-        doc.text(`Código: ${item.codigo}, Driver: ${item.driver}`, 10, y);
-        y += 10; // Incrementa a posição vertical para cada entrada
-    });
-
-    // Baixa o PDF com o nome "historico_buscas.pdf"
-    doc.save("historico_bipagem.pdf");
-}
+// Adiciona evento de entrada no campo de entrada de código
+document.getElementById("codigo").addEventListener("input", () => {
+    buscarPorCodigo(); // Chama a função de busca sempre que o usuário digita
+});
 
 // Alerta de confirmação ao recarregar a página
 window.addEventListener('beforeunload', function (event) {
@@ -360,3 +285,6 @@ window.addEventListener('beforeunload', function (event) {
     event.returnValue = message; // Para a maioria dos navegadores
     return message; // Para Firefox
 });
+
+
+9131203612
